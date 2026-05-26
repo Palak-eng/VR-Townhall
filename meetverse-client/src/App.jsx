@@ -12,21 +12,41 @@ async function apiPost(path, body) {
   return res.json();
 }
 
+// Authenticated GET request
+async function apiGet(path) {
+  const token = localStorage.getItem("nv_token");
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Authorization": `Bearer ${token}` },
+  });
+  return res.json();
+}
+
+// Authenticated POST/PATCH request
+async function apiAuth(path, body, method = "POST") {
+  const token = localStorage.getItem("nv_token");
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
 
 :root {
-  --black: #0a0a0a;
-  --off-black: #111111;
-  --card: #161616;
-  --border: #242424;
-  --mid: #2e2e2e;
-  --muted: #555;
-  --dim: #888;
-  --white: #f5f5f0;
-  --off-white: #e8e8e2;
-  --accent: #d4522a;
-  --accent-dim: rgba(212,82,42,0.12);
+  --black: #131B2E;
+  --off-black: #1A2744;
+  --card: #1E2D4A;
+  --border: #2A3A5C;
+  --mid: #3A4D6E;
+  --muted: #6B7789;
+  --dim: #8B95A8;
+  --white: #EFF1F3;
+  --off-white: #D8DCE4;
+  --accent: #9D75CB;
+  --accent-dim: rgba(157,117,203,0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,7 +67,7 @@ body {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 48px; height: 60px;
-  background: rgba(10,10,10,0.95);
+  background: rgba(19,27,46,0.97);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
 }
@@ -120,7 +140,7 @@ body {
   font-size: 0.78rem; letter-spacing: 0.07em; text-transform: uppercase;
   border: none; cursor: pointer; border-radius: 3px; transition: background 0.15s;
 }
-.btn-primary:hover { background: #bf4924; }
+.btn-primary:hover { background: #8a5fbf; }
 .btn-ghost-text {
   background: none; border: none; color: var(--dim); cursor: pointer;
   font-family: 'Instrument Sans', sans-serif; font-size: 0.78rem;
@@ -362,7 +382,7 @@ body {
 /* MODAL */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 200;
-  background: rgba(10,10,10,0.92); backdrop-filter: blur(6px);
+  background: rgba(13,18,30,0.92); backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center; padding: 24px;
   animation: fadein 0.2s ease;
 }
@@ -511,7 +531,7 @@ body {
   transition: all 0.2s; position: relative;
   background: var(--card);
 }
-.arch-layer.active { border-color: var(--accent); background: rgba(212,82,42,0.06); }
+.arch-layer.active { border-color: var(--accent); background: rgba(157,117,203,0.06); }
 .arch-layer:hover:not(.active) { border-color: var(--mid); }
 .arch-layer-label {
   font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase;
@@ -529,7 +549,7 @@ body {
   border: 1px solid var(--border); color: var(--muted);
   transition: all 0.2s;
 }
-.arch-layer.active .arch-chip { border-color: rgba(212,82,42,0.3); color: var(--off-white); }
+.arch-layer.active .arch-chip { border-color: rgba(157,117,203,0.3); color: var(--off-white); }
 .arch-connector {
   display: flex; align-items: center; justify-content: center;
   height: 36px; position: relative;
@@ -604,7 +624,7 @@ body {
   transition: all 0.2s; cursor: default;
 }
 .fnode:hover { border-color: var(--accent); }
-.fnode.fn-accent { border-color: rgba(212,82,42,0.4); background: rgba(212,82,42,0.08); }
+.fnode.fn-accent { border-color: rgba(157,117,203,0.4); background: rgba(157,117,203,0.08); }
 .fnode-sub { font-size: 0.65rem; font-weight: 400; color: var(--muted); margin-top: 2px; }
 .fnode-viewer { border-color: rgba(100,160,255,0.3); background: rgba(100,160,255,0.06); }
 .fnode-organiser { border-color: rgba(255,180,80,0.3); background: rgba(255,180,80,0.06); }
@@ -652,7 +672,129 @@ body {
   .cta-block { grid-template-columns: 1fr; gap: 36px; padding: 72px 24px; }
   .footer { padding: 24px; }
   .modal { padding: 32px 24px; }
+  .hero-login-section { flex-direction: column; gap: 40px; }
+  .hero-login-left { max-width: 100%; }
+  .hero-login-right { max-width: 340px; margin: 0 auto; }
+  .hero-login-right img { max-height: 380px; }
 }
+
+/* HERO LOGIN SECTION */
+.hero-login-section {
+  min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; padding: 100px 64px 60px;
+  gap: 60px;
+}
+.hero-login-left {
+  flex: 1; max-width: 520px;
+}
+.hero-login-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(56px, 7vw, 96px);
+  line-height: 0.95; letter-spacing: 0.03em;
+  background: linear-gradient(135deg, #B794E0 0%, #9D75CB 40%, #7B5DAF 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 8px;
+}
+.hero-login-subtitle {
+  font-size: 1.15rem; color: var(--dim); margin-bottom: 40px;
+  font-weight: 400; letter-spacing: 0.02em;
+}
+.hero-login-form { display: flex; flex-direction: column; gap: 14px; max-width: 380px; }
+.hero-login-form .finput {
+  padding: 13px 16px; font-size: 0.92rem;
+  background: rgba(30,45,74,0.6); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--white);
+}
+.hero-login-form .finput:focus { border-color: var(--accent); }
+.hero-login-form .finput::placeholder { color: var(--muted); }
+.hero-login-btns { display: flex; gap: 10px; margin-top: 4px; }
+.hero-login-btns .btn-signin {
+  flex: 1; padding: 12px 20px; background: var(--accent); color: #fff;
+  border: none; border-radius: 6px; font-family: 'Instrument Sans', sans-serif;
+  font-weight: 700; font-size: 0.85rem; letter-spacing: 0.05em;
+  cursor: pointer; transition: background 0.15s;
+}
+.hero-login-btns .btn-signin:hover { background: #8a5fbf; }
+.hero-login-btns .btn-signup-outline {
+  flex: 1; padding: 12px 20px; background: transparent;
+  color: var(--accent); border: 1.5px solid var(--accent); border-radius: 6px;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 700;
+  font-size: 0.85rem; letter-spacing: 0.05em;
+  cursor: pointer; transition: all 0.15s;
+}
+.hero-login-btns .btn-signup-outline:hover {
+  background: rgba(157,117,203,0.1); border-color: #B794E0;
+}
+.hero-forgot {
+  font-size: 0.82rem; color: var(--accent); background: none;
+  border: none; cursor: pointer; font-family: 'Instrument Sans', sans-serif;
+  font-weight: 600; text-align: left; padding: 0; margin-top: 2px;
+  transition: color 0.15s;
+}
+.hero-forgot:hover { color: #B794E0; }
+.hero-login-right {
+  flex: 0 0 auto; display: flex; align-items: flex-end;
+  justify-content: center; position: relative;
+}
+.hero-login-right img {
+  max-height: 500px; width: auto; display: block;
+  filter: drop-shadow(0 20px 60px rgba(157,117,203,0.25));
+  animation: heroFloat 4s ease-in-out infinite;
+}
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.hero-glow {
+  position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+  width: 260px; height: 60px;
+  background: radial-gradient(ellipse, rgba(157,117,203,0.25) 0%, transparent 70%);
+  filter: blur(15px); pointer-events: none;
+}
+.hero-login-err {
+  background: rgba(220,80,60,0.1); border: 1px solid rgba(220,80,60,0.3);
+  border-radius: 6px; padding: 9px 14px; color: #e0896e;
+  font-size: 0.82rem;
+}
+
+/* OTP VERIFICATION */
+.otp-section { animation: fadein 0.3s ease; }
+.otp-info {
+  background: rgba(157,117,203,0.08); border: 1px solid rgba(157,117,203,0.25);
+  border-radius: 6px; padding: 12px 16px; margin-bottom: 20px;
+}
+.otp-info-title {
+  font-size: 0.78rem; font-weight: 700; color: var(--accent);
+  letter-spacing: 0.04em; margin-bottom: 4px;
+}
+.otp-info-text { font-size: 0.82rem; color: var(--dim); line-height: 1.5; }
+.otp-api-note {
+  font-size: 0.72rem; color: var(--muted); font-style: italic;
+  margin-top: 6px; opacity: 0.8;
+}
+.otp-inputs {
+  display: flex; gap: 8px; justify-content: center; margin-bottom: 20px;
+}
+.otp-inputs input {
+  width: 48px; height: 56px; text-align: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem;
+  background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 8px; color: var(--white); outline: none;
+  transition: border-color 0.15s;
+}
+.otp-inputs input:focus { border-color: var(--accent); }
+.otp-inputs input::placeholder { color: var(--muted); opacity: 0.4; }
+.otp-resend {
+  text-align: center; margin-top: 12px; font-size: 0.8rem; color: var(--dim);
+}
+.otp-resend button {
+  background: none; border: none; color: var(--accent); cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif; font-size: 0.8rem;
+  font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+.otp-resend button:disabled { color: var(--muted); cursor: not-allowed; text-decoration: none; }
+.field-hint { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+.field-error { font-size: 0.7rem; color: #e0896e; margin-top: 3px; }
 `;
 
 function StyleInjector() {
@@ -685,55 +827,56 @@ function Nav({ onLogin, onSignup }) {
   );
 }
 
-function Hero({ onSignup }) {
+function Hero({ onSignup, onLogin }) {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function handleSignIn() {
+    if (!email.trim()) { setErr("Email is required."); return; }
+    if (!pass) { setErr("Password is required."); return; }
+    setLoading(true); setErr("");
+    try {
+      const data = await apiPost("/auth/login", { email, password: pass });
+      if (data.success) {
+        localStorage.setItem("nv_token", data.token);
+        localStorage.setItem("nv_user", JSON.stringify(data.user));
+        window.location.reload();
+      } else setErr(data.message || "Invalid credentials.");
+    } catch { setErr("Network error. Check your connection."); }
+    setLoading(false);
+  }
+
   return (
-    <section className="hero">
-      <div className="hero-eyebrow">
-        <span className="hero-tag hero-tag-accent">India Innovates 2026</span>
-        <div className="rule-h" />
-        <span className="hero-tag">Virtual Leadership Infrastructure</span>
-      </div>
-      <div className="hero-body">
-        <div>
-          <h1 className="hero-title">
-            Lead.<br /><span className="t-accent">Connect.</span><br /><span className="t-italic">Anywhere.</span>
-          </h1>
-          <p className="hero-desc">
-            A virtual presence platform for government officials, educators, and institutions. AI avatars,
-            immersive sessions, and VR compatibility — all on a secure, scalable infrastructure.
-          </p>
-          <div className="hero-ctas">
-            <button className="btn-primary" onClick={onSignup}>Create Account</button>
-            <button className="btn-ghost-text" onClick={() => document.getElementById("how")?.scrollIntoView({behavior:"smooth"})}>
-              See how it works <span className="arrow">→</span>
+    <section className="hero-login-section">
+      <div className="hero-login-left">
+        <h1 className="hero-login-title">MEETVERSE</h1>
+        <p className="hero-login-subtitle">Virtual Meetings Reimagined</p>
+        <div className="hero-login-form">
+          {err && <div className="hero-login-err">{err}</div>}
+          <input
+            className="finput" type="text" placeholder="username or email"
+            value={email} onChange={e => setEmail(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSignIn()}
+          />
+          <input
+            className="finput" type="password" placeholder="Password"
+            value={pass} onChange={e => setPass(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSignIn()}
+          />
+          <div className="hero-login-btns">
+            <button className="btn-signin" onClick={handleSignIn} disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </button>
+            <button className="btn-signup-outline" onClick={onSignup}>Sign Up</button>
           </div>
+          <button className="hero-forgot">Forgot Password?</button>
         </div>
-        <div className="hero-right">
-          <div className="hero-vis">
-            <div className="vis-grid" />
-            <div className="vis-ring">
-              <div className="vis-dot vd1" />
-              <div className="vis-dot vd2" />
-              <div className="vis-dot vd3" />
-            </div>
-            <div className="vis-label">Virtual Environment <span>/ Active</span></div>
-          </div>
-          <div className="hero-stats">
-            <div className="h-stat">
-              <div className="h-stat-num">VR<span className="a">+</span></div>
-              <div className="h-stat-lbl">Full body<br />tracking</div>
-            </div>
-            <div className="h-stat">
-              <div className="h-stat-num">RAG<span className="a">.</span></div>
-              <div className="h-stat-lbl">Knowledge<br />base AI</div>
-            </div>
-            <div className="h-stat">
-              <div className="h-stat-num">ML<span className="a">.</span></div>
-              <div className="h-stat-lbl">Emotion<br />detection</div>
-            </div>
-          </div>
-        </div>
+      </div>
+      <div className="hero-login-right">
+        <img src="/Arnav.png" alt="VR Experience" />
+        <div className="hero-glow" />
       </div>
     </section>
   );
@@ -1116,15 +1259,101 @@ function SignupModal({ onClose, onSwitch, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [ok, setOk] = useState("");
-  const set = (k,v) => setF(p=>({...p,[k]:v}));
+  const [fieldErrors, setFieldErrors] = useState({});
+  // OTP state for creator/organiser verification
+  const [otpStep, setOtpStep] = useState(false);
+  const [otp, setOtp] = useState(["","","","","",""]);
+  const [otpErr, setOtpErr] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const set = (k,v) => { setF(p=>({...p,[k]:v})); setFieldErrors(p=>({...p,[k]:""})); };
 
-  async function submit() {
-    if (!f.name||!f.email||!f.password) { setErr("Name, email, and password are required."); return; }
-    if (f.userType==="creator"&&!f.organizationName) { setErr("Organisation name required for Creator accounts."); return; }
+  // Validate fields matching backend constraints
+  function validate() {
+    const errors = {};
+    if (!f.name.trim()) errors.name = "Name is required";
+    if (!f.email.trim()) errors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) errors.email = "Enter a valid email address";
+    if (!f.password) errors.password = "Password is required";
+    else if (f.password.length < 6) errors.password = "Password must be at least 6 characters";
+    if (f.userType === "creator" && !f.organizationName.trim()) errors.organizationName = "Organisation name required for Creator accounts";
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  // Start OTP flow for creator, or submit directly for viewer
+  function handleNext() {
+    if (!validate()) return;
+    setErr("");
+    if (f.userType === "creator") {
+      setOtpStep(true);
+      startResendCooldown();
+    } else {
+      submitRegistration();
+    }
+  }
+
+  function startResendCooldown() {
+    setResendCooldown(30);
+    const interval = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(interval); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  function handleResend() {
+    setOtpErr("");
+    setOtp(["","","","","",""]);
+    startResendCooldown();
+  }
+
+  // Handle OTP digit input with auto-focus
+  function handleOtpChange(idx, val) {
+    if (val.length > 1) val = val.slice(-1);
+    if (val && !/^\d$/.test(val)) return;
+    const next = [...otp];
+    next[idx] = val;
+    setOtp(next);
+    setOtpErr("");
+    // Auto-focus next input
+    if (val && idx < 5) {
+      const nextInput = document.getElementById(`otp-${idx + 1}`);
+      nextInput?.focus();
+    }
+  }
+
+  function handleOtpKeyDown(idx, e) {
+    if (e.key === "Backspace" && !otp[idx] && idx > 0) {
+      const prevInput = document.getElementById(`otp-${idx - 1}`);
+      prevInput?.focus();
+    }
+    if (e.key === "Enter") verifyOtp();
+  }
+
+  // Handle paste of full OTP code
+  function handleOtpPaste(e) {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length === 6) {
+      setOtp(pasted.split(""));
+      const lastInput = document.getElementById("otp-5");
+      lastInput?.focus();
+    }
+  }
+
+  // Verify OTP — accepts any 6 digits for now (frontend placeholder)
+  function verifyOtp() {
+    const code = otp.join("");
+    if (code.length < 6) { setOtpErr("Please enter all 6 digits."); return; }
+    submitRegistration();
+  }
+
+  async function submitRegistration() {
     setLoading(true); setErr(""); setOk("");
     try {
-      const body = {name:f.name,email:f.email,password:f.password,userType:f.userType};
-      if (f.userType==="creator") body.organizationName = f.organizationName;
+      const body = { name: f.name, email: f.email, password: f.password, userType: f.userType };
+      if (f.userType === "creator") body.organizationName = f.organizationName;
       const data = await apiPost("/auth/register", body);
       if (data.success) {
         localStorage.setItem("nv_token", data.token);
@@ -1141,46 +1370,97 @@ function SignupModal({ onClose, onSwitch, onSuccess }) {
       <div className="modal">
         <button className="modal-x" onClick={onClose}>✕</button>
         <div className="modal-eyebrow">MeetVerse Platform</div>
-        <h2 className="modal-title">Create Account</h2>
-        <p className="modal-sub">Join the virtual leadership platform.</p>
-        {err && <div className="merr">{err}</div>}
-        {ok && <div className="mok">{ok}</div>}
-        <div className="fgroup">
-          <label className="flabel">Account Type</label>
-          <div className="role-row">
-            <button className={`role-opt ${f.userType==="viewer"?"on":""}`} onClick={()=>set("userType","viewer")}>Viewer / Student</button>
-            <button className={`role-opt ${f.userType==="creator"?"on":""}`} onClick={()=>set("userType","creator")}>Creator / Leader</button>
-          </div>
-        </div>
-        <div className="fdivider" />
-        <div className="fgroup">
-          <label className="flabel">Full Name</label>
-          <input className="finput" type="text" value={f.name} onChange={e=>set("name",e.target.value)} />
-        </div>
-        <div className="fgroup">
-          <label className="flabel">Email</label>
-          <input className="finput" type="email" value={f.email} onChange={e=>set("email",e.target.value)} />
-        </div>
-        <div className="fgroup">
-          <label className="flabel">Password</label>
-          <input className="finput" type="password" value={f.password} onChange={e=>set("password",e.target.value)} />
-        </div>
-        {f.userType==="creator" && (
-          <div className="fgroup">
-            <label className="flabel">Organisation Name</label>
-            <input className="finput" type="text" value={f.organizationName} onChange={e=>set("organizationName",e.target.value)} />
+
+        {!otpStep ? (
+          <>
+            <h2 className="modal-title">Create Account</h2>
+            <p className="modal-sub">Join the virtual leadership platform.</p>
+            {err && <div className="merr">{err}</div>}
+            {ok && <div className="mok">{ok}</div>}
+            <div className="fgroup">
+              <label className="flabel">Account Type</label>
+              <div className="role-row">
+                <button className={`role-opt ${f.userType==="viewer"?"on":""}`} onClick={()=>set("userType","viewer")}>Viewer / Student</button>
+                <button className={`role-opt ${f.userType==="creator"?"on":""}`} onClick={()=>set("userType","creator")}>Organiser / Leader</button>
+              </div>
+            </div>
+            <div className="fdivider" />
+            <div className="fgroup">
+              <label className="flabel">Full Name</label>
+              <input className="finput" type="text" value={f.name} onChange={e=>set("name",e.target.value)} placeholder="Enter your full name" />
+              {fieldErrors.name && <div className="field-error">{fieldErrors.name}</div>}
+            </div>
+            <div className="fgroup">
+              <label className="flabel">Email</label>
+              <input className="finput" type="email" value={f.email} onChange={e=>set("email",e.target.value)} placeholder="you@example.com" />
+              {fieldErrors.email && <div className="field-error">{fieldErrors.email}</div>}
+            </div>
+            <div className="fgroup">
+              <label className="flabel">Password</label>
+              <input className="finput" type="password" value={f.password} onChange={e=>set("password",e.target.value)} placeholder="Minimum 6 characters" />
+              {fieldErrors.password && <div className="field-error">{fieldErrors.password}</div>}
+              {!fieldErrors.password && <div className="field-hint">Must be at least 6 characters</div>}
+            </div>
+            {f.userType==="creator" && (
+              <div className="fgroup">
+                <label className="flabel">Organisation Name</label>
+                <input className="finput" type="text" value={f.organizationName} onChange={e=>set("organizationName",e.target.value)} placeholder="Your organisation" />
+                {fieldErrors.organizationName && <div className="field-error">{fieldErrors.organizationName}</div>}
+              </div>
+            )}
+            <button className="sbtn" onClick={handleNext} disabled={loading}>
+              {loading ? <><Spin />Creating account</> : f.userType === "creator" ? "Continue — Verify Email →" : "Create Account →"}
+            </button>
+            <div className="mswitch">Have an account? <button onClick={onSwitch}>Sign in</button></div>
+          </>
+        ) : (
+          <div className="otp-section">
+            <h2 className="modal-title">Verify Email</h2>
+            <p className="modal-sub">Confirm your email to activate your organiser account.</p>
+            {err && <div className="merr">{err}</div>}
+            {ok && <div className="mok">{ok}</div>}
+            <div className="otp-info">
+              <div className="otp-info-title">Verification Code</div>
+              <div className="otp-info-text">
+                A 6-digit code has been sent to <strong style={{color:"var(--white)"}}>{f.email}</strong>
+              </div>
+              <div className="otp-api-note">Note: Email delivery API will be integrated soon. Enter any 6 digits to proceed.</div>
+            </div>
+            {otpErr && <div className="merr">{otpErr}</div>}
+            <div className="otp-inputs" onPaste={handleOtpPaste}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i} id={`otp-${i}`}
+                  type="text" inputMode="numeric" maxLength={1}
+                  value={digit}
+                  onChange={e => handleOtpChange(i, e.target.value)}
+                  onKeyDown={e => handleOtpKeyDown(i, e)}
+                  placeholder="·"
+                  autoFocus={i === 0}
+                />
+              ))}
+            </div>
+            <button className="sbtn" onClick={verifyOtp} disabled={loading}>
+              {loading ? <><Spin />Verifying</> : "Verify & Create Account →"}
+            </button>
+            <div className="otp-resend">
+              Didn't receive a code?{" "}
+              <button onClick={handleResend} disabled={resendCooldown > 0}>
+                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+              </button>
+            </div>
+            <div className="mswitch" style={{marginTop:"12px"}}>
+              <button onClick={() => { setOtpStep(false); setOtp(["","","","","",""]); setOtpErr(""); }}>← Back to form</button>
+            </div>
           </div>
         )}
-        <button className="sbtn" onClick={submit} disabled={loading}>
-          {loading ? <><Spin />Creating account</> : "Create Account →"}
-        </button>
-        <div className="mswitch">Have an account? <button onClick={onSwitch}>Sign in</button></div>
       </div>
     </div>
   );
 }
 
-function Dashboard({ user, onLogout, onEnter }) {
+
+function LandingDashboard({ user, onLogout, onEnter, onSkip }) {
   return (
     <div className="dash">
       <div className="dash-card">
@@ -1197,12 +1477,134 @@ function Dashboard({ user, onLogout, onEnter }) {
             Your avatar environment is ready. Enter MeetVerse to{" "}
             {user?.userType==="creator"?"customise your avatar and host a session":"browse sessions and join as your avatar"}.
           </p>
-          <div style={{ display:"flex", gap:12, alignItems:"center", marginTop: 4 }}>
+          <div style={{ display:"flex", gap:12, alignItems:"center", marginTop: 4, flexWrap: "wrap" }}>
             <button className="btn-primary" onClick={onEnter}>
               Enter MeetVerse →
             </button>
             <button className="btn-out" onClick={onLogout}>Sign out</button>
+            <button 
+              onClick={onSkip} 
+              style={{ background: 'transparent', border: '1px solid #131B2E', color: '#131B2E', padding: '10px 20px', borderRadius: 4, cursor: 'pointer', fontWeight: 600, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            >
+              Skip Customizer (Dev)
+            </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MainDashboard({ user, setUser, onLogout, onJoinRoom }) {
+  const [editingName, setEditingName] = useState(false);
+  const [tempName, setTempName] = useState(user?.name || "");
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const handleSaveName = () => {
+    const updatedUser = { ...user, name: tempName };
+    setUser(updatedUser);
+    localStorage.setItem("nv_user", JSON.stringify(updatedUser));
+    setEditingName(false);
+  };
+
+  // Close profile menu if clicked outside loosely (or just toggle on icon)
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#f5f7fa', color: '#131B2E', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 60, background: '#131B2E', display: 'flex', alignItems: 'center', padding: '0 32px', zIndex: 10, justifyContent: 'space-between', borderBottom: '1px solid #2A3A5C' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: '0.05em', color: '#fff' }}>MEETVERSE</div>
+          <div style={{ color: '#8B95A8', fontSize: 13, letterSpacing: '0.02em', textTransform: 'uppercase' }}>Virtual Meetings Reimagined</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button style={{ background: '#9D75CB', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Update avatar</button>
+          
+          <div style={{ position: 'relative' }}>
+            <div 
+              style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer' }} 
+              onClick={() => setShowProfileMenu(!showProfileMenu)} 
+              title="Profile"
+            >
+               <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            
+            {showProfileMenu && (
+              <div style={{ position: 'absolute', top: 40, right: 0, background: '#1E2D4A', border: '1px solid #2A3A5C', borderRadius: 6, padding: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', minWidth: 160, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>{user?.name || "Username"}</div>
+                  <div style={{ color: '#8B95A8', fontSize: 12, textTransform: 'capitalize' }}>Role: {user?.userType || "Viewer"}</div>
+                </div>
+                <div style={{ height: 1, background: '#2A3A5C', width: '100%' }}></div>
+                <button onClick={onLogout} style={{ background: 'transparent', border: 'none', color: '#8B95A8', cursor: 'pointer', textAlign: 'left', padding: 0, fontSize: 14, fontWeight: 600, transition: 'color 0.2s' }} onMouseOver={e=>e.currentTarget.style.color='#fff'} onMouseOut={e=>e.currentTarget.style.color='#8B95A8'}>Sign Out</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', width: '100%', marginTop: 60 }}>
+        {/* Sidebar */}
+        <div style={{ width: 300, background: '#f0f2f5', borderRight: '1px solid #e1e4e8', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', position: 'fixed', top: 60, bottom: 0, left: 0 }}>
+          <div style={{ width: 120, height: 120, borderRadius: '50%', background: '#131B2E', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', marginBottom: 24, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+             <svg width="64" height="64" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          {editingName ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', width: '100%' }}>
+               <input autoFocus value={tempName} onChange={e=>setTempName(e.target.value)} style={{ width: '80%', padding: '8px 12px', border: '1px solid #2A3A5C', borderRadius: 4, textAlign: 'center', fontSize: 16, fontWeight: 600, color: '#131B2E', outline: 'none' }} />
+               <div style={{ display: 'flex', gap: 8 }}>
+                 <button onClick={handleSaveName} style={{ background: '#131B2E', color: 'white', border: 'none', padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Save</button>
+                 <button onClick={()=>{setTempName(user?.name); setEditingName(false)}} style={{ background: 'transparent', color: '#131B2E', border: '1px solid #131B2E', padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Cancel</button>
+               </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 20, fontWeight: 700, color: '#131B2E', textAlign: 'center', wordBreak: 'break-word' }}>
+              @{user?.name || "username"}
+              <button onClick={()=>setEditingName(true)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#8B95A8', display: 'flex', alignItems: 'center', padding: 4 }} title="Edit Username">
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              </button>
+            </div>
+          )}
+          <div style={{ width: '100%', height: 1, background: '#e1e4e8', marginTop: 32 }}></div>
+        </div>
+
+        {/* Main Content Area */}
+        <div style={{ flex: 1, padding: '40px 60px', background: '#ffffff', marginLeft: 300 }}>
+          
+          <div style={{ display: 'flex', gap: 24, marginBottom: 40, border: '1px solid #e1e4e8', padding: 24, borderRadius: 8, background: '#fff' }}>
+            <button onClick={onJoinRoom} style={{ flex: 1, background: '#131B2E', color: 'white', border: 'none', borderRadius: 6, padding: '20px 0', fontSize: 18, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, transition: 'opacity 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=0.9} onMouseOut={e=>e.currentTarget.style.opacity=1}>
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              Join Room
+            </button>
+            <button onClick={onJoinRoom} style={{ flex: 1, background: '#9D75CB', color: 'white', border: 'none', borderRadius: 6, padding: '20px 0', fontSize: 18, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, transition: 'opacity 0.2s' }} onMouseOver={e=>e.currentTarget.style.opacity=0.9} onMouseOut={e=>e.currentTarget.style.opacity=1}>
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Create Room
+            </button>
+          </div>
+
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#131B2E', marginBottom: 20 }}>Active Public Meeting Rooms</h2>
+
+          <div style={{ border: '1px solid #e1e4e8', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+            {[1,2,3,4].map((i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: i < 4 ? '1px solid #e1e4e8' : 'none' }}>
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#131B2E', margin: '0 0 8px 0' }}>meeting room {i}</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#8B95A8', fontSize: 14, fontWeight: 600 }}>
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    24 users
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12 }}>
+                  <button onClick={onJoinRoom} style={{ background: '#131B2E', color: 'white', border: 'none', borderRadius: 4, padding: '8px 32px', fontSize: 14, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }} onMouseOver={e=>e.currentTarget.style.background='#1A2744'} onMouseOut={e=>e.currentTarget.style.background='#131B2E'}>
+                    Join
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div style={{ textAlign: 'center', marginTop: 40, color: '#8B95A8', fontSize: 13 }}>
+            © {new Date().getFullYear()} Meetverse. All rights reserved.
+          </div>
+
         </div>
       </div>
     </div>
@@ -1211,28 +1613,60 @@ function Dashboard({ user, onLogout, onEnter }) {
 
 export default function App() {
   const [modal, setModal] = useState(null);
-  const [inUnity, setInUnity] = useState(false);
+  const [appState, setAppState] = useState("landing"); // 'landing' | 'customizer' | 'dashboard' | 'multiplayer'
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem("nv_user")); } catch { return null; }
   });
+  const [avatarData, setAvatarData] = useState(null);
+
+  useEffect(() => {
+    // Expose dispatchReactEvent globally so Unity JSLib can call it
+    window.dispatchReactEvent = (eventName, data) => {
+      const event = new CustomEvent(eventName, { detail: data });
+      window.dispatchEvent(event);
+    };
+
+    const handleAvatarComplete = (e) => {
+      console.log("AvatarComplete event received:", e.detail);
+      setAvatarData(e.detail);
+      setAppState("dashboard");
+    };
+
+    window.addEventListener("AvatarComplete", handleAvatarComplete);
+    return () => {
+      delete window.dispatchReactEvent;
+      window.removeEventListener("AvatarComplete", handleAvatarComplete);
+    };
+  }, []);
+
   function onSuccess(u) { setUser(u); setModal(null); }
   function onLogout() {
     localStorage.removeItem("nv_token");
     localStorage.removeItem("nv_user");
     setUser(null);
-    setInUnity(false);
+    setAppState("landing");
   }
 
   return (
     <>
       <StyleInjector />
-      {inUnity && <UnityEmbed onExit={() => setInUnity(false)} />}
-      {!inUnity && (
+      
+      {(appState === "customizer" || appState === "dashboard" || appState === "multiplayer") && (
+        <UnityEmbed 
+           mode={appState} 
+           avatarData={avatarData}
+           onExit={() => setAppState(appState === "multiplayer" ? "dashboard" : "landing")} 
+        />
+      )}
+      
+      {appState === "landing" && (
         <>
           <Nav onLogin={()=>setModal("login")} onSignup={()=>setModal("signup")} />
-          {user ? <Dashboard user={user} onLogout={onLogout} onEnter={() => setInUnity(true)} /> : (
+          {user ? (
+            <LandingDashboard user={user} onLogout={onLogout} onEnter={() => setAppState("customizer")} onSkip={() => setAppState("dashboard")} />
+          ) : (
             <>
-              <Hero onSignup={()=>setModal("signup")} />
+              <Hero onSignup={()=>setModal("signup")} onLogin={()=>setModal("login")} />
               <Marquee />
               <HowItWorks />
               <Features />
@@ -1245,6 +1679,15 @@ export default function App() {
           {modal==="login" && <LoginModal onClose={()=>setModal(null)} onSwitch={()=>setModal("signup")} onSuccess={onSuccess} />}
           {modal==="signup" && <SignupModal onClose={()=>setModal(null)} onSwitch={()=>setModal("login")} onSuccess={onSuccess} />}
         </>
+      )}
+
+      {appState === "dashboard" && (
+        <MainDashboard 
+           user={user} 
+           setUser={setUser}
+           onLogout={onLogout} 
+           onJoinRoom={() => setAppState("multiplayer")} 
+        />
       )}
     </>
   );

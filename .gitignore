@@ -1,3 +1,10 @@
+node_modules/
+.env
+*.log
+.DS_Store
+uploads/
+
+
 ############################
 # Unity Generated Folders
 ############################
@@ -65,3 +72,6 @@ dist/
 build/
 .env
 .env.local
+
+##Misc
+Claude.md

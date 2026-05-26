@@ -143,4 +143,59 @@ public static class AvatarDataStore
 
         Debug.Log("[AvatarDataStore] Avatar state applied.");
     }
+
+    [System.Serializable]
+    public class AvatarSaveData
+    {
+        public int SkinIndex;
+        public string[] Keys;
+        public string[] Values;
+    }
+
+    /// <summary>
+    /// Serializes current state to JSON string for React bridge
+    /// </summary>
+    public static string ToJson()
+    {
+        AvatarSaveData data = new AvatarSaveData();
+        data.SkinIndex = SkinIndex;
+        
+        int count = activeChildren.Count;
+        data.Keys = new string[count];
+        data.Values = new string[count];
+        
+        int i = 0;
+        foreach (var kvp in activeChildren)
+        {
+            data.Keys[i] = kvp.Key;
+            data.Values[i] = kvp.Value;
+            i++;
+        }
+        
+        return JsonUtility.ToJson(data);
+    }
+
+    /// <summary>
+    /// Deserializes state from JSON string passed from React bridge
+    /// </summary>
+    public static void FromJson(string json)
+    {
+        if (string.IsNullOrEmpty(json)) return;
+        
+        AvatarSaveData data = JsonUtility.FromJson<AvatarSaveData>(json);
+        if (data != null)
+        {
+            SkinIndex = data.SkinIndex;
+            activeChildren.Clear();
+            if (data.Keys != null && data.Values != null && data.Keys.Length == data.Values.Length)
+            {
+                for (int i = 0; i < data.Keys.Length; i++)
+                {
+                    activeChildren[data.Keys[i]] = data.Values[i];
+                }
+            }
+            HasData = true;
+            Debug.Log($"[AvatarDataStore] Hydrated from JSON: {activeChildren.Count} entries");
+        }
+    }
 }
